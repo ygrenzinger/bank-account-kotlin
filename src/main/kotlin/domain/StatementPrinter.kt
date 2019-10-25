@@ -1,29 +1,36 @@
 package domain
 
+import arrow.core.extensions.list.foldable.combineAll
+import arrow.typeclasses.Monoid
 import java.time.LocalDate
+import java.time.Period
 import java.util.function.Predicate
 
-class StatementLineFilters {
+
+class StatementLineFilter(val predicate: (StatementLine) -> Boolean) :
+        Monoid<StatementLineFilter>, Predicate<StatementLine> {
+    override fun test(line: StatementLine): Boolean {
+        return predicate.invoke(line)
+    }
+
+    override fun empty() = StatementLineFilter.empty()
+
+    override fun StatementLineFilter.combine(b: StatementLineFilter): StatementLineFilter {
+        return StatementLineFilter {line -> this.predicate.invoke(line) && b.predicate.invoke(line) }
+    }
+
     companion object {
-        fun betweenDates(startDate: LocalDate, endDate: LocalDate): Predicate<StatementLine> {
-            return Predicate {
-                val date = it.operation.date
-                date.isEqual(startDate) || date.isEqual(endDate) || date.isAfter(startDate) && date.isBefore(endDate)
-            }
+        fun empty() = StatementLineFilter { true }
+
+        fun betweenDates(startDate: LocalDate, endDate: LocalDate) = StatementLineFilter {
+            val date = it.operation.date
+            startDate.compareTo(date) * date.compareTo(endDate) >= 0
         }
 
-        val onlyDeposit: Predicate<StatementLine> = Predicate {
-            it.operation is Deposit
-        }
-        val onlyWithdrawal: Predicate<StatementLine> = Predicate {
-            it.operation is Withdrawal
-        }
+        val onlyDeposit = StatementLineFilter {  it.operation is Deposit }
+        val onlyWithdrawal = StatementLineFilter { it.operation is Withdrawal }
 
-        fun withFilters(filters: List<Predicate<StatementLine>>): Predicate<StatementLine> {
-            return filters.reduce { sum, element ->
-                sum.and(element)
-            }
-        }
+        fun combine(filters: List<StatementLineFilter>) = filters.combineAll(empty())
     }
 }
 
@@ -32,10 +39,10 @@ interface Printer {
 }
 
 class StatementPrinter(private val printer: Printer) {
-    fun printStatementFor(account: BankAccount, predicate: Predicate<StatementLine> = Predicate { true }) {
+    fun printStatementFor(account: BankAccount, filter: StatementLineFilter = StatementLineFilter.empty()) {
         account.retrieveStatementLines()
                 .filter {
-                    predicate.test(it)
+                    filter.test(it)
                 }
                 .reversed()
                 .forEach {

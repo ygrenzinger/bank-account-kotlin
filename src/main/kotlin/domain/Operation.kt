@@ -17,5 +17,3 @@ data class Deposit(override val amount: BigDecimal, override val date: LocalDate
 data class Withdrawal(override val amount: BigDecimal, override val date: LocalDate) : Operation() {
     override fun value() = -amount
 }
-
-

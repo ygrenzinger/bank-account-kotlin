@@ -1,6 +1,6 @@
 package domain
 
-import domain.StatementLineFilters.Companion.onlyDeposit
+import domain.StatementLineFilter.Companion.onlyDeposit
 import io.kotlintest.TestCase
 import io.kotlintest.extensions.TestListener
 import io.kotlintest.matchers.collections.shouldContainExactly
@@ -49,9 +49,9 @@ class StatementPrinterTest : StringSpec({
 
     "should print statement with only Withdraw and between specific dates" {
 
-        val predicate = StatementLineFilters.withFilters(listOf(
-                StatementLineFilters.onlyWithdrawal,
-                StatementLineFilters.betweenDates(LocalDate.of(2019, 9, 1), LocalDate.of(2019, 9, 3))
+        val predicate = StatementLineFilter.combine(listOf(
+                StatementLineFilter.onlyWithdrawal,
+                StatementLineFilter.betweenDates(LocalDate.of(2019, 9, 1), LocalDate.of(2019, 9, 3))
         ))
         StatementPrinter(PrinterListener.fakePrinter).printStatementFor(account, predicate)
 
