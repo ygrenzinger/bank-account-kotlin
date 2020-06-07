@@ -1,10 +1,11 @@
 package domain
 
 import domain.StatementLineFilter.Companion.onlyDeposit
-import io.kotlintest.TestCase
-import io.kotlintest.extensions.TestListener
-import io.kotlintest.matchers.collections.shouldContainExactly
-import io.kotlintest.specs.StringSpec
+import io.kotest.core.listeners.TestListener
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.core.test.TestCase
+import io.kotest.core.test.TestResult
+import io.kotest.matchers.collections.shouldContainExactly
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -17,7 +18,7 @@ object PrinterListener : TestListener {
         }
     }
 
-    override fun beforeTest(testCase: TestCase) {
+    override suspend fun afterTest(testCase: TestCase, result: TestResult) {
         lines.clear()
     }
 }
