@@ -7,6 +7,11 @@ import java.util.*
 
 sealed class AccountEvent(private val accountId: UUID) : Event {
     override fun aggregateIdentifier() = accountId
+    override fun type() = TYPE
+
+    companion object {
+        const val TYPE = "account-event"
+    }
 }
 
 data class DepositMade(val accountId: UUID, val amount: Money, val date: LocalDate) : AccountEvent(accountId)

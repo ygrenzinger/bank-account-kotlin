@@ -1,31 +1,24 @@
 package cqrs.domain.account.view
 
+import cqrs.domain.account.AccountAggregate
 import cqrs.domain.account.AccountEvent
 import cqrs.domain.account.DepositMade
 import cqrs.domain.account.WithdrawMade
-import cqrs.domain.common.Event
-import cqrs.domain.common.EventBus
 import cqrs.domain.common.Money
-import java.util.*
+import cqrs.domain.common.View
 
-class StatementHistory(private val accountId: UUID) {
+class StatementHistory(override val associatedAggregate: AccountAggregate) : View<AccountAggregate, AccountEvent> {
 
     private var balance = Money.zero
     private val lines = mutableListOf<StatementLine>()
     private val reversed = lines.asReversed()
 
-    fun attachToBus(eventBus: EventBus) {
-        eventBus.attach { event ->
-            consume(event)
-        }
-    }
-
     fun lines(): List<String> {
-        return listOf("date  | amount | balance") +  lines.reversed().map { it.toPrint() }
+        return listOf("date  | amount | balance") + reversed.map { it.toPrint() }
     }
 
-    private fun consume(event: Event) {
-        if (event.aggregateIdentifier() == accountId && event is AccountEvent) {
+    override fun consume(event: AccountEvent) {
+        if (event.aggregateIdentifier() == associatedAggregate.aggregateId) {
             when (event) {
                 is DepositMade -> {
                     lines.add(StatementLine(event.date, event.amount, balance))
@@ -38,5 +31,9 @@ class StatementHistory(private val accountId: UUID) {
                 }
             }
         }
+    }
+
+    override fun selecting(): String {
+        return AccountEvent.TYPE
     }
 }

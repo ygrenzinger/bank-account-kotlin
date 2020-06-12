@@ -12,7 +12,7 @@ import java.util.*
 internal class InMemoryEventProcessorTest : StringSpec({
 
     "should store and retrieve events" {
-        val eventStore = InMemoryEventProcessor()
+        val eventStore = InMemoryEventProcessor
         val uuid = UUID.randomUUID()
         val deposit = DepositMade(uuid, Money.of(15.0), LocalDate.now())
         val withdraw = WithdrawMade(uuid, Money.of(5.0), LocalDate.now())

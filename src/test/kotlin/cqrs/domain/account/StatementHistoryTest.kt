@@ -4,6 +4,7 @@ import cqrs.domain.account.view.StatementHistory
 import cqrs.domain.common.EventProcessor
 import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
+import cqrs.domain.common.createView
 import cqrs.infrastructure.InMemoryEventProcessor
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -19,10 +20,9 @@ class StatementHistoryTest : StringSpec({
 
     beforeTest {
         accountUUID = UUID.randomUUID()
-        eventProcessor = InMemoryEventProcessor()
+        eventProcessor = InMemoryEventProcessor
         accountAggregate = AccountAggregate(accountUUID, eventProcessor)
-        statementHistory = StatementHistory(accountUUID)
-        statementHistory.attachToBus(eventProcessor)
+        statementHistory = eventProcessor.createView { StatementHistory(accountAggregate) }
     }
 
     "should build statement history" {

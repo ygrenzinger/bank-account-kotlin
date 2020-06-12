@@ -8,7 +8,7 @@ import java.util.*
 @Suppress("UNCHECKED_CAST")
 abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
         val aggregateId: UUID,
-        protected val aggregateType: String,
+        val aggregateType: String,
         protected val eventStore: EventStore) {
 
     abstract fun evolveWith(event: E): A
