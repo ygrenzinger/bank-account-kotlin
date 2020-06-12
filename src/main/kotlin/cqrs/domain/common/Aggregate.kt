@@ -6,36 +6,58 @@ import arrow.core.flatMap
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
-abstract class Aggregate<T : Aggregate<T, E, C>, E : Event, C : Command>(
+abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
         val aggregateId: UUID,
         protected val aggregateType: String,
         protected val eventStore: EventStore) {
 
-    abstract fun applyEvent(event: E): T
+    abstract fun evolveWith(event: E): A
 
     abstract fun commandToEvents(command: C): Either<Exception, List<E>>
 
-    fun processCommand(command: C): Either<Exception, T> {
+    fun decideFor(command: C): Either<Exception, A> {
         return try {
             commandToEvents(command).map { events ->
-                events.forEach { eventStore.storeEvent(aggregateType, it) }
-                events.fold(this as T) { a, e -> a.applyEvent(e) }
+                events.forEach { eventStore.pushEvent(aggregateType, it) }
+                events.fold(this as A) { a, e -> a.evolveWith(e) }
             }
         } catch (e: Exception) {
             Either.left(e)
         }
     }
 
-    fun processCommands(vararg commands: C): Either<Exception, T> {
-        val first: Either<Exception, T> = processCommand(commands.first())
-        return commands.drop(1).foldLeft(first) { acc: Either<Exception, T>, c: C ->
-            acc.flatMap { it.processCommand(c) }
+    fun decideFor(vararg commands: C): Either<Exception, A> {
+        val first: Either<Exception, A> = decideFor(commands.first())
+        return commands.drop(1).foldLeft(first) { acc: Either<Exception, A>, c: C ->
+            acc.flatMap { it.decideFor(c) }
         }
     }
 
-    fun rehydrate() {
-        eventStore.retrieveEvents(aggregateType, aggregateId).forEach {
-            applyEvent(it as E)
+    fun rehydrate(): A {
+        return eventStore.retrieveEvents(aggregateType, aggregateId).foldLeft(this as A) {
+            a, e -> a.evolveWith(e as E)
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Aggregate<*, *, *>) return false
+
+        if (aggregateId != other.aggregateId) return false
+        if (aggregateType != other.aggregateType) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = aggregateId.hashCode()
+        result = 31 * result + aggregateType.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Aggregate(aggregateId=$aggregateId, aggregateType='$aggregateType')"
+    }
+
+
 }

@@ -1,19 +1,22 @@
 package cqrs.domain.account
 
+import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
-import cqrs.infrastructure.InMemoryEventStore
+import cqrs.infrastructure.InMemoryEventProcessor
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.time.LocalDate
 import java.util.*
 
 class AccountAggregateTest : StringSpec({
 
     lateinit var accountAggregate: AccountAggregate
-    val eventStore = InMemoryEventStore()
-    lateinit var uuid : UUID
+    lateinit var eventStore: EventStore
+    lateinit var uuid: UUID
 
     beforeTest {
         uuid = UUID.randomUUID()
+        eventStore = InMemoryEventProcessor()
         accountAggregate = AccountAggregate(uuid, eventStore)
     }
 
@@ -23,24 +26,24 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should make deposits on bank account" {
-        accountAggregate.processCommand(MakeDeposit(uuid, Money.of(100.0)))
-        accountAggregate.processCommand(MakeDeposit(uuid, Money.of(20.0)))
+        accountAggregate.decideFor(MakeDeposit(uuid, Money.of(100.0), LocalDate.now()))
+        accountAggregate.decideFor(MakeDeposit(uuid, Money.of(20.0), LocalDate.now()))
         accountAggregate.balance shouldBe Money.of(120.0)
     }
 
     "should make withdraws on bank account" {
-        accountAggregate.processCommands(
-                MakeDeposit(uuid, Money.of(100.0)),
-                MakeWithdraw(uuid, Money.of(20.0)),
-                MakeWithdraw(uuid, Money.of(15.0))
+        accountAggregate.decideFor(
+                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(20.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(15.0), LocalDate.now())
         )
         accountAggregate.balance shouldBe Money.of(65.0)
     }
 
     "should allow to rehydrate account from db" {
-        accountAggregate.processCommands(
-                MakeDeposit(uuid, Money.of(100.0)),
-                MakeWithdraw(uuid, Money.of(20.0))
+        accountAggregate.decideFor(
+                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(20.0), LocalDate.now())
         )
         val reloaded = AccountAggregate(uuid, eventStore)
         reloaded.rehydrate()

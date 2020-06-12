@@ -5,6 +5,6 @@ import java.util.*
 
 sealed class BankEvent : Event
 
-data class AccountCreated(val bankId: UUID, val accountId: UUID) : BankEvent() {
+data class AccountCreated(val bankId: UUID, val ssn: String, val accountId: UUID) : BankEvent() {
     override fun aggregateIdentifier() = bankId
 }

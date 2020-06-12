@@ -14,11 +14,11 @@ class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
 
     override fun commandToEvents(command: AccountCommand): Either<Exception, List<AccountEvent>> =
             Either.right(when (command) {
-                is MakeDeposit -> listOf(DepositMade(command.accountId, command.amount))
-                is MakeWithdraw -> listOf(WithdrawMade(command.accountId, command.amount))
+                is MakeDeposit -> listOf(DepositMade(command.accountId, command.amount, command.date))
+                is MakeWithdraw -> listOf(WithdrawMade(command.accountId, command.amount, command.date))
             })
 
-    override fun applyEvent(event: AccountEvent): AccountAggregate {
+    override fun evolveWith(event: AccountEvent): AccountAggregate {
         when (event) {
             is DepositMade -> balance += event.amount
             is WithdrawMade -> balance -= event.amount
