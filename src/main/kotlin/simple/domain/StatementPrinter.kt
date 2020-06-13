@@ -1,9 +1,8 @@
-package domain
+package simple.domain
 
 import arrow.core.extensions.list.foldable.combineAll
 import arrow.typeclasses.Monoid
 import java.time.LocalDate
-import java.time.Period
 import java.util.function.Predicate
 
 

@@ -37,7 +37,7 @@ object InMemoryEventProcessor : EventProcessor {
 
     override fun sendEvent(event: Event) {
         listeners[event.type()]?.forEach {
-            it.consume(event)
+            it.evolve(event)
         }
     }
 }

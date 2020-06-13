@@ -1,7 +1,7 @@
-package domain
+package simple.domain
 
 import io.kotest.core.spec.style.StringSpec
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import java.math.BigDecimal
 
 class BankAccountTest : StringSpec({

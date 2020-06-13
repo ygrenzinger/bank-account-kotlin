@@ -5,7 +5,6 @@ import arrow.core.extensions.list.foldable.foldLeft
 import arrow.core.flatMap
 import java.util.*
 
-@Suppress("UNCHECKED_CAST")
 abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
         val aggregateId: UUID,
         val aggregateType: String,
@@ -15,28 +14,30 @@ abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
 
     abstract fun commandToEvents(command: C): Either<Exception, List<E>>
 
-    fun decideFor(command: C): Either<Exception, A> {
+    fun decideFor(command: C): Either<Exception, Aggregate<A, E, C>> {
         return try {
             commandToEvents(command).map { events ->
                 events.forEach { eventStore.pushEvent(aggregateType, it) }
-                events.fold(this as A) { a, e -> a.evolveWith(e) }
+                events.fold(this) { a, e -> a.evolveWith(e) }
             }
         } catch (e: Exception) {
             Either.left(e)
         }
     }
 
-    fun decideFor(vararg commands: C): Either<Exception, A> {
-        val first: Either<Exception, A> = decideFor(commands.first())
-        return commands.drop(1).foldLeft(first) { acc: Either<Exception, A>, c: C ->
-            acc.flatMap { it.decideFor(c) }
-        }
+    fun decideFor(vararg commands: C): Either<Exception, Aggregate<A, E, C>> {
+        return commands.drop(1)
+                .foldLeft(decideFor(commands.first())) { acc, c ->
+                    acc.flatMap { it.decideFor(c) }
+                }
     }
 
-    fun rehydrate(): A {
-        return eventStore.retrieveEvents(aggregateType, aggregateId).foldLeft(this as A) {
-            a, e -> a.evolveWith(e as E)
-        }
+    @Suppress("UNCHECKED_CAST")
+    fun rehydrate(): Aggregate<A, E, C> {
+        return eventStore.retrieveEvents(aggregateType, aggregateId)
+                .foldLeft(this) { a, e ->
+                    a.evolveWith(e as E)
+                }
     }
 
     override fun equals(other: Any?): Boolean {

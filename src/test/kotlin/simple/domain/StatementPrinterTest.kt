@@ -1,6 +1,6 @@
-package domain
+package simple.domain
 
-import domain.StatementLineFilter.Companion.onlyDeposit
+import simple.domain.StatementLineFilter.Companion.onlyDeposit
 import io.kotest.core.listeners.TestListener
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase

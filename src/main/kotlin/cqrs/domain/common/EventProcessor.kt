@@ -6,7 +6,7 @@ inline fun <reified A : Aggregate<A, E, C>, reified C : Command, reified E : Eve
         EventProcessor.createView(init: () -> V): V {
     val view = init()
     this.retrieveEvents(view.associatedAggregate.aggregateType, view.associatedAggregate.aggregateId).forEach {
-        view.consume(it as E)
+        view.evolve(it as E)
     }
     view.attachToBus(this)
     return view

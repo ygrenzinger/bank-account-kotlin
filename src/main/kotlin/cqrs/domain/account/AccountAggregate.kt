@@ -34,4 +34,5 @@ class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
             return account
         }
     }
+
 }
