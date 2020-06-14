@@ -1,4 +1,12 @@
-.idea/
-*.iml
 target/
 .kotlintest/
+
+# Intellij
+.idea/
+*.iml
+
+# Eclipse
+bin/
+.settings/
+.classpath
+.project
