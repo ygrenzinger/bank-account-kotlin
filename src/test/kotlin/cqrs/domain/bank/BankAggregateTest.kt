@@ -16,7 +16,7 @@ class BankAggregateTest : StringSpec({
     beforeTest {
         bankId = UUID.randomUUID()
         accountId = UUID.randomUUID()
-        eventStore = InMemoryEventProcessor
+        eventStore = InMemoryEventProcessor()
         bankAggregate = BankAggregate(bankId, eventStore)
     }
 

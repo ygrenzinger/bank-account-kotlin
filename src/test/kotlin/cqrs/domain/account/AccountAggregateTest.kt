@@ -1,5 +1,6 @@
 package cqrs.domain.account
 
+import arrow.core.Either
 import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
 import cqrs.infrastructure.InMemoryEventProcessor
@@ -16,7 +17,7 @@ class AccountAggregateTest : StringSpec({
 
     beforeTest {
         uuid = UUID.randomUUID()
-        eventStore = InMemoryEventProcessor
+        eventStore = InMemoryEventProcessor()
         accountAggregate = AccountAggregate(uuid, eventStore)
     }
 
@@ -32,6 +33,15 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should make withdraws on bank account" {
+        val result = accountAggregate.decideFor(
+                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(120.0), LocalDate.now())
+        )
+
+        result shouldBe Either.Left(NotEnoughMoney(Money.of(20.0)))
+    }
+
+    "should not allow to withdraw more than balance in the account" {
         accountAggregate.decideFor(
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(20.0), LocalDate.now()),

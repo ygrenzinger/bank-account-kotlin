@@ -13,15 +13,30 @@ class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
         private set
 
     override fun commandToEvents(command: AccountCommand): Either<Exception, List<AccountEvent>> =
-            Either.right(when (command) {
-                is MakeDeposit -> listOf(DepositMade(command.accountId, command.amount, command.date))
-                is MakeWithdraw -> listOf(WithdrawMade(command.accountId, command.amount, command.date))
-            })
+            when (command) {
+                is MakeDeposit -> Either.right(listOf(DepositMade(command.accountId, command.amount, command.date)))
+                is MakeWithdraw -> withdrawMoney(command.amount) { listOf(WithdrawMade(command.accountId, command.amount, command.date)) }
+                is MakeTransferWithdraw -> withdrawMoney(command.amount) { listOf(TransferWithdrawMade(command.accountId, command.transferId, command.amount, command.date)) }
+                is MakeTransferDeposit -> Either.right(listOf(TransferDepositMade(command.accountId, command.transferId, command.amount, command.date)))
+                is CancelTransferWithdraw -> Either.right(listOf(TransferWithdrawCanceled(command.accountId, command.transferId, command.amount)))
+            }
+
+    private fun withdrawMoney(money: Money, f: () -> List<AccountEvent>): Either<Exception, List<AccountEvent>> {
+        val remaining = balance - money
+        return if (remaining < Money.zero) {
+            Either.left(NotEnoughMoney(-remaining))
+        } else {
+            Either.right(f())
+        }
+    }
 
     override fun evolveWith(event: AccountEvent): AccountAggregate {
         when (event) {
             is DepositMade -> balance += event.amount
             is WithdrawMade -> balance -= event.amount
+            is TransferWithdrawMade -> balance -= event.amount
+            is TransferDepositMade -> balance += event.amount
+            is TransferWithdrawCanceled -> balance += event.amount
         }
         return this
     }

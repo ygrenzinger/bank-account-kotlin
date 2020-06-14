@@ -5,7 +5,7 @@ import cqrs.domain.common.EventProcessor
 import cqrs.domain.common.View
 import java.util.*
 
-object InMemoryEventProcessor : EventProcessor {
+class InMemoryEventProcessor() : EventProcessor {
 
     data class Row(val aggregateType: String, val aggregateId: UUID, val event: Event)
 

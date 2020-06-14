@@ -10,9 +10,9 @@ abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
         val aggregateType: String,
         protected val eventStore: EventStore) {
 
-    abstract fun evolveWith(event: E): A
+    protected abstract fun evolveWith(event: E): A
 
-    abstract fun commandToEvents(command: C): Either<Exception, List<E>>
+    protected abstract fun commandToEvents(command: C): Either<Exception, List<E>>
 
     fun decideFor(command: C): Either<Exception, Aggregate<A, E, C>> {
         return try {
