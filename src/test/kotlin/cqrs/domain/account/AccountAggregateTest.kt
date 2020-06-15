@@ -1,6 +1,7 @@
 package cqrs.domain.account
 
 import arrow.core.Either
+import arrow.core.orNull
 import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
 import cqrs.infrastructure.InMemoryEventProcessor
@@ -27,27 +28,29 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should make deposits on bank account" {
-        accountAggregate.process(MakeDeposit(uuid, Money.of(100.0), LocalDate.now()))
-        accountAggregate.process(MakeDeposit(uuid, Money.of(20.0), LocalDate.now()))
-        accountAggregate.balance shouldBe Money.of(120.0)
+        val updated = accountAggregate.process(
+                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
+                MakeDeposit(uuid, Money.of(20.0), LocalDate.now())
+        ).orNull()!!
+        updated.balance shouldBe Money.of(120.0)
     }
 
     "should make withdraws on bank account" {
+        val updated = accountAggregate.process(
+                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(20.0), LocalDate.now()),
+                MakeWithdraw(uuid, Money.of(15.0), LocalDate.now())
+        ).orNull()!!
+        updated.balance shouldBe Money.of(65.0)
+    }
+
+    "should not allow to withdraw more than balance in the account" {
         val result = accountAggregate.process(
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(120.0), LocalDate.now())
         )
 
         result shouldBe Either.Left(NotEnoughMoney(Money.of(20.0)))
-    }
-
-    "should not allow to withdraw more than balance in the account" {
-        accountAggregate.process(
-                MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
-                MakeWithdraw(uuid, Money.of(20.0), LocalDate.now()),
-                MakeWithdraw(uuid, Money.of(15.0), LocalDate.now())
-        )
-        accountAggregate.balance shouldBe Money.of(65.0)
     }
 
     "should allow to rehydrate account from db" {

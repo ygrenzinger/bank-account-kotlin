@@ -7,10 +7,11 @@ import cqrs.domain.common.Aggregate
 import cqrs.domain.common.EventStore
 import java.util.*
 
-class BankAggregate(aggregateId: UUID, eventStore: EventStore)
-    : Aggregate<BankAggregate, BankEvent, BankCommand>(aggregateId, AccountAggregate.TYPE, eventStore) {
-
-    private val accounts = mutableMapOf<String, UUID>()
+data class BankAggregate(override val aggregateId: UUID,
+                         override val eventStore: EventStore,
+                         private val accounts: Map<String, UUID> = mapOf())
+    : Aggregate<BankAggregate, BankEvent, BankCommand> {
+    override val aggregateType: String = "account"
 
     fun retrieveAccount(accountId: UUID): Option<AccountAggregate> {
         return if (accounts.values.contains(accountId)) {
@@ -42,12 +43,10 @@ class BankAggregate(aggregateId: UUID, eventStore: EventStore)
         }
     }
 
-    override fun apply(event: BankEvent): BankAggregate {
-        when (event) {
-            is AccountCreated -> accounts[event.ssn] = event.accountId
-        }
-        return this
-    }
+    override fun apply(event: BankEvent): BankAggregate =
+            when (event) {
+                is AccountCreated -> this.copy(accounts = accounts + (event.ssn to event.accountId))
+            }
 
     override fun toString(): String {
         return "BankAggregate(bankId=$aggregateId,accounts=$accounts)"

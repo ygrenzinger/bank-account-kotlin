@@ -1,6 +1,9 @@
 package cqrs.domain.bank
 
 import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.orNull
+import cqrs.domain.common.Aggregate
 import cqrs.domain.common.EventStore
 import cqrs.infrastructure.InMemoryEventProcessor
 import io.kotest.core.spec.style.StringSpec
@@ -21,28 +24,31 @@ class BankAggregateTest : StringSpec({
     }
 
     "should create a new account" {
-        bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-        val foundAccount = bankAggregate.retrieveAccount(accountId).orNull()!!
+        val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
+                .map { it.retrieveAccount(accountId).orNull() }
+                .orNull()!!
+
         foundAccount.aggregateId shouldBe accountId
     }
 
     "should retrieve account by SSN" {
-        bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-        val foundAccount = bankAggregate.retrieveAccountBySSN("ssn").orNull()!!
+        val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
+                .map { it.retrieveAccountBySSN("ssn").orNull() }
+                .orNull()!!
         foundAccount.aggregateId shouldBe accountId
     }
 
     "should fail if accountId already exist" {
-        bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
+        val updated = bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
         val createNewAccount = CreateAccount(bankId, accountId, "ssn2")
-        val result = bankAggregate.process(createNewAccount)
+        val result = updated.flatMap { it.process(createNewAccount) }
         result shouldBe Either.left(AccountAlreadyExisting(createNewAccount))
     }
 
     "should fail if social security number is already associated to another account" {
-        bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
+        val updated = bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
         val createNewAccount = CreateAccount(bankId, UUID.randomUUID(), "ssn1")
-        val result = bankAggregate.process(createNewAccount)
+        val result = updated.flatMap { it.process(createNewAccount) }
         result shouldBe Either.left(AccountAlreadyExisting(createNewAccount))
     }
 })

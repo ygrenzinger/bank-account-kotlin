@@ -6,11 +6,11 @@ import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
 import java.util.*
 
-class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
-    : Aggregate<AccountAggregate, AccountEvent, AccountCommand>(aggregateId, TYPE, eventStore) {
-
-    var balance: Money = Money.zero
-        private set
+data class AccountAggregate(override val aggregateId: UUID,
+                            override val eventStore: EventStore,
+                            val balance: Money = Money.zero)
+    : Aggregate<AccountAggregate, AccountEvent, AccountCommand> {
+    override val aggregateType: String = "account"
 
     override fun commandToEvents(command: AccountCommand): Either<Exception, List<AccountEvent>> =
             when (command) {
@@ -30,19 +30,16 @@ class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
         }
     }
 
-    override fun apply(event: AccountEvent): AccountAggregate {
-        when (event) {
-            is DepositMade -> balance += event.amount
-            is WithdrawMade -> balance -= event.amount
-            is TransferWithdrawMade -> balance -= event.amount
-            is TransferDepositMade -> balance += event.amount
-            is TransferWithdrawCanceled -> balance += event.amount
-        }
-        return this
-    }
+    override fun apply(event: AccountEvent): AccountAggregate =
+            when (event) {
+                is DepositMade -> this.copy(balance = balance + event.amount)
+                is WithdrawMade -> this.copy(balance = balance - event.amount)
+                is TransferDepositMade -> this.copy(balance = balance + event.amount)
+                is TransferWithdrawMade -> this.copy(balance = balance - event.amount)
+                is TransferWithdrawCanceled -> this.copy(balance = balance + event.amount)
+            }
 
     companion object {
-        const val TYPE = "account"
         fun loadAccount(aggregateId: UUID, eventStore: EventStore): AccountAggregate {
             val account = AccountAggregate(aggregateId, eventStore)
             account.rehydrate()

@@ -1,6 +1,7 @@
 package cqrs.domain.bank
 
 import arrow.core.Either
+import arrow.core.orNull
 import cqrs.domain.account.AccountAggregate
 import cqrs.domain.account.MakeDeposit
 import cqrs.domain.account.NotEnoughMoney
@@ -22,14 +23,14 @@ class MoneyTransferTest : StringSpec({
     beforeTest {
         eventStore = InMemoryEventProcessor()
         accountA = AccountAggregate(UUID.randomUUID(), eventStore)
-        accountA.process(MakeDeposit(accountA.aggregateId, Money.of(100.0), LocalDate.now()))
+        accountA = accountA.process(MakeDeposit(accountA.aggregateId, Money.of(100.0), LocalDate.now())).orNull()!!
         accountB = AccountAggregate(UUID.randomUUID(), eventStore)
     }
 
     "should transfer money between two account" {
-        MoneyTransfer.transferMoney(accountA, accountB, Money.of(100.0), LocalDate.now())
-        accountA.balance shouldBe Money.zero
-        accountB.balance shouldBe Money.of(100.0)
+        val (updateAccountA, updateAccountB) = MoneyTransfer.transferMoney(accountA, accountB, Money.of(100.0), LocalDate.now()).orNull()!!
+        updateAccountA.balance shouldBe Money.zero
+        updateAccountB.balance shouldBe Money.of(100.0)
     }
 
     "should not transfer money if withdraw account has not enough money" {
