@@ -10,25 +10,25 @@ abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
         val aggregateType: String,
         protected val eventStore: EventStore) {
 
-    protected abstract fun evolveWith(event: E): A
+    protected abstract fun apply(event: E): A
 
     protected abstract fun commandToEvents(command: C): Either<Exception, List<E>>
 
-    fun decideFor(command: C): Either<Exception, Aggregate<A, E, C>> {
+    fun process(command: C): Either<Exception, Aggregate<A, E, C>> {
         return try {
             commandToEvents(command).map { events ->
                 events.forEach { eventStore.pushEvent(aggregateType, it) }
-                events.fold(this) { a, e -> a.evolveWith(e) }
+                events.fold(this) { aggregate, event -> aggregate.apply(event) }
             }
         } catch (e: Exception) {
             Either.left(e)
         }
     }
 
-    fun decideFor(vararg commands: C): Either<Exception, Aggregate<A, E, C>> {
+    fun process(vararg commands: C): Either<Exception, Aggregate<A, E, C>> {
         return commands.drop(1)
-                .foldLeft(decideFor(commands.first())) { acc, c ->
-                    acc.flatMap { it.decideFor(c) }
+                .foldLeft(process(commands.first())) { acc, c ->
+                    acc.flatMap { it.process(c) }
                 }
     }
 
@@ -36,7 +36,7 @@ abstract class Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command>(
     fun rehydrate(): Aggregate<A, E, C> {
         return eventStore.retrieveEvents(aggregateType, aggregateId)
                 .foldLeft(this) { a, e ->
-                    a.evolveWith(e as E)
+                    a.apply(e as E)
                 }
     }
 

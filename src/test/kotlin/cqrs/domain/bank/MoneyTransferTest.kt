@@ -22,7 +22,7 @@ class MoneyTransferTest : StringSpec({
     beforeTest {
         eventStore = InMemoryEventProcessor()
         accountA = AccountAggregate(UUID.randomUUID(), eventStore)
-        accountA.decideFor(MakeDeposit(accountA.aggregateId, Money.of(100.0), LocalDate.now()))
+        accountA.process(MakeDeposit(accountA.aggregateId, Money.of(100.0), LocalDate.now()))
         accountB = AccountAggregate(UUID.randomUUID(), eventStore)
     }
 

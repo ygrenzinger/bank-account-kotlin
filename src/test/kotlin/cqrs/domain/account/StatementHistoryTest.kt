@@ -25,7 +25,7 @@ class StatementHistoryTest : StringSpec({
     }
 
     "should build statement history" {
-        accountAggregate.decideFor(
+        accountAggregate.process(
                 MakeDeposit(accountUUID, Money.of(100.0), LocalDate.of(2020,1, 12)),
                 MakeWithdraw(accountUUID, Money.of(30.0), LocalDate.of(2020, 1, 12)),
                 MakeDeposit(accountUUID, Money.of(130.0), LocalDate.of(2020, 1, 13))

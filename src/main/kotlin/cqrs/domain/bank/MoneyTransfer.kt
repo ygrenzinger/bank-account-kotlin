@@ -12,13 +12,13 @@ object MoneyTransfer {
     fun transferMoney(fromAccount: AccountAggregate, toAccount: AccountAggregate, money: Money, date: LocalDate): Either<Exception, Pair<Aggregate<*, *, *>, Aggregate<*, *, *>>> {
         val transferId = UUID.randomUUID()
         return fromAccount
-                .decideFor(MakeTransferWithdraw(fromAccount.aggregateId, transferId, money, date))
+                .process(MakeTransferWithdraw(fromAccount.aggregateId, transferId, money, date))
                 .flatMap { updateFrom ->
-                    toAccount.decideFor(MakeTransferDeposit(toAccount.aggregateId, transferId, money, date))
+                    toAccount.process(MakeTransferDeposit(toAccount.aggregateId, transferId, money, date))
                             .map { Pair(updateFrom, it) }
                 }.mapLeft {
                     if (it !is NotEnoughMoney) {
-                        fromAccount.decideFor(CancelTransferWithdraw(fromAccount.aggregateId, transferId, money))
+                        fromAccount.process(CancelTransferWithdraw(fromAccount.aggregateId, transferId, money))
                         TransferFailException(it)
                     } else {
                         it

@@ -30,7 +30,7 @@ class AccountAggregate(aggregateId: UUID, eventStore: EventStore)
         }
     }
 
-    override fun evolveWith(event: AccountEvent): AccountAggregate {
+    override fun apply(event: AccountEvent): AccountAggregate {
         when (event) {
             is DepositMade -> balance += event.amount
             is WithdrawMade -> balance -= event.amount

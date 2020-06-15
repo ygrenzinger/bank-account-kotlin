@@ -42,7 +42,7 @@ class BankAggregate(aggregateId: UUID, eventStore: EventStore)
         }
     }
 
-    override fun evolveWith(event: BankEvent): BankAggregate {
+    override fun apply(event: BankEvent): BankAggregate {
         when (event) {
             is AccountCreated -> accounts[event.ssn] = event.accountId
         }

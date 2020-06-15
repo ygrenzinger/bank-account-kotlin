@@ -27,13 +27,13 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should make deposits on bank account" {
-        accountAggregate.decideFor(MakeDeposit(uuid, Money.of(100.0), LocalDate.now()))
-        accountAggregate.decideFor(MakeDeposit(uuid, Money.of(20.0), LocalDate.now()))
+        accountAggregate.process(MakeDeposit(uuid, Money.of(100.0), LocalDate.now()))
+        accountAggregate.process(MakeDeposit(uuid, Money.of(20.0), LocalDate.now()))
         accountAggregate.balance shouldBe Money.of(120.0)
     }
 
     "should make withdraws on bank account" {
-        val result = accountAggregate.decideFor(
+        val result = accountAggregate.process(
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(120.0), LocalDate.now())
         )
@@ -42,7 +42,7 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should not allow to withdraw more than balance in the account" {
-        accountAggregate.decideFor(
+        accountAggregate.process(
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(20.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(15.0), LocalDate.now())
@@ -51,7 +51,7 @@ class AccountAggregateTest : StringSpec({
     }
 
     "should allow to rehydrate account from db" {
-        accountAggregate.decideFor(
+        accountAggregate.process(
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(20.0), LocalDate.now())
         )

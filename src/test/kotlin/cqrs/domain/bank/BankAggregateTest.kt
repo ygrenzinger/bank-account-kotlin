@@ -21,28 +21,28 @@ class BankAggregateTest : StringSpec({
     }
 
     "should create a new account" {
-        bankAggregate.decideFor(CreateAccount(bankId, accountId, "ssn"))
+        bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
         val foundAccount = bankAggregate.retrieveAccount(accountId).orNull()!!
         foundAccount.aggregateId shouldBe accountId
     }
 
     "should retrieve account by SSN" {
-        bankAggregate.decideFor(CreateAccount(bankId, accountId, "ssn"))
+        bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
         val foundAccount = bankAggregate.retrieveAccountBySSN("ssn").orNull()!!
         foundAccount.aggregateId shouldBe accountId
     }
 
     "should fail if accountId already exist" {
-        bankAggregate.decideFor(CreateAccount(bankId, accountId, "ssn1"))
+        bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
         val createNewAccount = CreateAccount(bankId, accountId, "ssn2")
-        val result = bankAggregate.decideFor(createNewAccount)
+        val result = bankAggregate.process(createNewAccount)
         result shouldBe Either.left(AccountAlreadyExisting(createNewAccount))
     }
 
     "should fail if social security number is already associated to another account" {
-        bankAggregate.decideFor(CreateAccount(bankId, accountId, "ssn1"))
+        bankAggregate.process(CreateAccount(bankId, accountId, "ssn1"))
         val createNewAccount = CreateAccount(bankId, UUID.randomUUID(), "ssn1")
-        val result = bankAggregate.decideFor(createNewAccount)
+        val result = bankAggregate.process(createNewAccount)
         result shouldBe Either.left(AccountAlreadyExisting(createNewAccount))
     }
 })
