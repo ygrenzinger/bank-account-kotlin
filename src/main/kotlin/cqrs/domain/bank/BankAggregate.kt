@@ -47,4 +47,10 @@ data class BankAggregate(override val aggregateId: UUID,
                 is AccountCreated -> this.copy(accounts = accounts + (event.ssn to event.accountId))
             }
 
+    companion object {
+        fun loadBank(aggregateId: UUID, eventStore: EventStore): BankAggregate? {
+            return eventStore.rehydrate { BankAggregate(aggregateId, eventStore) }
+        }
+    }
+
 }

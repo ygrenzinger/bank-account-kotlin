@@ -3,9 +3,11 @@ package cqrs.domain.bank
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.orNull
+import cqrs.domain.bank.BankAggregate.Companion.loadBank
 import cqrs.domain.common.EventStore
 import cqrs.infrastructure.InMemoryEventProcessor
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import java.util.*
 
@@ -20,20 +22,20 @@ class BankAggregateTest : StringSpec({
         accountId = UUID.randomUUID()
         eventStore = InMemoryEventProcessor()
         bankAggregate = BankAggregate(bankId, eventStore)
+        bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
     }
 
-    "should create a new account" {
-        val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-                .map { it.retrieveAccount(accountId) }
-                .orNull()!!
+    "should have create a new account" {
+        eventStore.retrieveEvents(bankAggregate) shouldContainExactly listOf(AccountCreated(bankId, "ssn", accountId))
+    }
 
+    "should retrieve account" {
+        val foundAccount = loadBank(bankId, eventStore)?.retrieveAccount(accountId)!!
         foundAccount.aggregateId shouldBe accountId
     }
 
     "should retrieve account by SSN" {
-        val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-                .map { it.retrieveAccountBySSN("ssn") }
-                .orNull()!!
+        val foundAccount = loadBank(bankId, eventStore)?.retrieveAccountBySSN("ssn")!!
         foundAccount.aggregateId shouldBe accountId
     }
 
