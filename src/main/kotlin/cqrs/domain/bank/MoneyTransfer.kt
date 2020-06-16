@@ -10,8 +10,7 @@ import java.util.*
 data class TransferSuccessResult(val fromAccount: AccountAggregate, val toAccount: AccountAggregate)
 
 object MoneyTransfer {
-    fun transferMoney(fromAccount: AccountAggregate, toAccount: AccountAggregate, money: Money, date: LocalDate): Either<Exception, TransferSuccessResult> {
-        val transferId = UUID.randomUUID()
+    fun transferMoney(fromAccount: AccountAggregate, toAccount: AccountAggregate, money: Money, date: LocalDate, transferId: UUID): Either<Exception, TransferSuccessResult> {
         val transferOperation = Either.fx<Exception, TransferSuccessResult> {
             val (updatedFrom) = fromAccount.process(MakeTransferWithdraw(fromAccount.aggregateId, transferId, money, date))
             val (updatedTo) = toAccount.process(MakeTransferDeposit(toAccount.aggregateId, transferId, money, date))
