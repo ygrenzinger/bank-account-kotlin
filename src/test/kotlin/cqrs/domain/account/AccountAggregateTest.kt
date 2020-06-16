@@ -58,10 +58,9 @@ class AccountAggregateTest : StringSpec({
                 MakeDeposit(uuid, Money.of(100.0), LocalDate.now()),
                 MakeWithdraw(uuid, Money.of(20.0), LocalDate.now())
         )
-        val reloaded = AccountAggregate(uuid, eventStore)
-        reloaded.rehydrate()
-        accountAggregate.aggregateId shouldBe reloaded.aggregateId
-        accountAggregate.balance shouldBe reloaded.balance
+        val reloaded = eventStore.rehydrate { AccountAggregate(uuid, eventStore) }!!
+        reloaded.aggregateId shouldBe uuid
+        reloaded.balance shouldBe Money.of(80.0)
     }
 
 })

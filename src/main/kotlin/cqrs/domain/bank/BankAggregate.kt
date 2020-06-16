@@ -1,7 +1,6 @@
 package cqrs.domain.bank
 
 import arrow.core.Either
-import arrow.core.Option
 import cqrs.domain.account.AccountAggregate
 import cqrs.domain.common.Aggregate
 import cqrs.domain.common.EventStore
@@ -13,33 +12,33 @@ data class BankAggregate(override val aggregateId: UUID,
     : Aggregate<BankAggregate, BankEvent, BankCommand> {
     override val aggregateType: String = "account"
 
-    fun retrieveAccount(accountId: UUID): Option<AccountAggregate> {
+    fun retrieveAccount(accountId: UUID): AccountAggregate? {
         return if (accounts.values.contains(accountId)) {
-            Option.just(AccountAggregate.loadAccount(accountId, eventStore))
+            loadOrCreateAccountAggregate(accountId)
         } else {
-            Option.empty()
+            null
         }
     }
 
     fun retrieveAccountBySSN(ssn: String) =
-            Option.fromNullable(accounts[ssn]).map {
-                AccountAggregate.loadAccount(it, eventStore)
-            }
+            accounts[ssn]?.let { loadOrCreateAccountAggregate(it) }
+
+    private fun loadOrCreateAccountAggregate(accountId: UUID) =
+            AccountAggregate.loadAccount(accountId, eventStore) ?: AccountAggregate(accountId, eventStore)
 
     private fun alreadyExists(createAccount: CreateAccount) =
             accounts.values.contains(createAccount.accountId) || accounts.keys.contains(createAccount.ssn)
 
-    override fun commandToEvents(command: BankCommand): Either<Exception, List<BankEvent>> {
-        return try {
-            return when (command) {
-                is CreateAccount -> if (alreadyExists(command)) {
-                    Either.left(AccountAlreadyExisting(command))
-                } else {
-                    Either.right(listOf(AccountCreated(command.bankId, command.ssn, command.accountId)))
-                }
+    override fun commandToEvents(command: BankCommand) =
+            when (command) {
+                is CreateAccount -> createAccount(command).map { listOf(it) }
             }
-        } catch (e: Exception) {
-            Either.left(e)
+
+    private fun createAccount(command: CreateAccount): Either<AccountAlreadyExisting, AccountCreated> {
+        return if (alreadyExists(command)) {
+            Either.left(AccountAlreadyExisting(command))
+        } else {
+            Either.right(AccountCreated(command.bankId, command.ssn, command.accountId))
         }
     }
 
@@ -47,9 +46,5 @@ data class BankAggregate(override val aggregateId: UUID,
             when (event) {
                 is AccountCreated -> this.copy(accounts = accounts + (event.ssn to event.accountId))
             }
-
-    override fun toString(): String {
-        return "BankAggregate(bankId=$aggregateId,accounts=$accounts)"
-    }
 
 }

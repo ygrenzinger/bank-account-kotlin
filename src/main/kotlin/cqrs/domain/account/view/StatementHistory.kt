@@ -17,7 +17,7 @@ class StatementHistory(override val associatedAggregate: AccountAggregate) : Vie
         return listOf("date  | amount | balance") + reversed.map { it.toPrint() }
     }
 
-    override fun evolve(event: AccountEvent) {
+    override fun apply(event: AccountEvent) {
         if (event.aggregateIdentifier() == associatedAggregate.aggregateId) {
             when (event) {
                 is DepositMade -> {

@@ -1,5 +1,6 @@
 package cqrs.infrastructure
 
+import cqrs.domain.common.Aggregate
 import cqrs.domain.common.Event
 import cqrs.domain.common.EventProcessor
 import cqrs.domain.common.View
@@ -17,12 +18,13 @@ class InMemoryEventProcessor() : EventProcessor {
         sendEvent(event)
     }
 
-    override fun retrieveEvents(aggregateType: String, aggregateId: UUID): List<Event> {
+    @Suppress("UNCHECKED_CAST")
+    override fun <E : Event> retrieveEvents(aggregate: Aggregate<*, E, *>): List<E> {
         return db.filter {
-            it.aggregateType == aggregateType && it.aggregateId == aggregateId
+            it.aggregateType == aggregate.aggregateType && it.aggregateId == aggregate.aggregateId
         }.map {
             it.event
-        }
+        } as List<E>
     }
 
     override fun attach(view: View<*, Event>) {
@@ -37,7 +39,7 @@ class InMemoryEventProcessor() : EventProcessor {
 
     override fun sendEvent(event: Event) {
         listeners[event.type()]?.forEach {
-            it.evolve(event)
+            it.apply(event)
         }
     }
 }

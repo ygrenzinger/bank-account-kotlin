@@ -5,6 +5,7 @@ import arrow.core.orNull
 import cqrs.domain.account.AccountAggregate
 import cqrs.domain.account.MakeDeposit
 import cqrs.domain.account.NotEnoughMoney
+import cqrs.domain.common.Aggregate
 import cqrs.domain.common.Event
 import cqrs.domain.common.EventStore
 import cqrs.domain.common.Money
@@ -47,7 +48,7 @@ class MoneyTransferTest : StringSpec({
                 }
             }
 
-            override fun retrieveEvents(aggregateType: String, aggregateId: UUID): List<Event> {
+            override fun <E : Event> retrieveEvents(aggregate: Aggregate<*, E, *>): List<E> {
                 return emptyList()
             }
 

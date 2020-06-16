@@ -3,7 +3,6 @@ package cqrs.domain.bank
 import arrow.core.Either
 import arrow.core.flatMap
 import arrow.core.orNull
-import cqrs.domain.common.Aggregate
 import cqrs.domain.common.EventStore
 import cqrs.infrastructure.InMemoryEventProcessor
 import io.kotest.core.spec.style.StringSpec
@@ -25,7 +24,7 @@ class BankAggregateTest : StringSpec({
 
     "should create a new account" {
         val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-                .map { it.retrieveAccount(accountId).orNull() }
+                .map { it.retrieveAccount(accountId) }
                 .orNull()!!
 
         foundAccount.aggregateId shouldBe accountId
@@ -33,7 +32,7 @@ class BankAggregateTest : StringSpec({
 
     "should retrieve account by SSN" {
         val foundAccount = bankAggregate.process(CreateAccount(bankId, accountId, "ssn"))
-                .map { it.retrieveAccountBySSN("ssn").orNull() }
+                .map { it.retrieveAccountBySSN("ssn") }
                 .orNull()!!
         foundAccount.aggregateId shouldBe accountId
     }

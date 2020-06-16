@@ -40,10 +40,8 @@ data class AccountAggregate(override val aggregateId: UUID,
             }
 
     companion object {
-        fun loadAccount(aggregateId: UUID, eventStore: EventStore): AccountAggregate {
-            val account = AccountAggregate(aggregateId, eventStore)
-            account.rehydrate()
-            return account
+        fun loadAccount(aggregateId: UUID, eventStore: EventStore): AccountAggregate? {
+            return eventStore.rehydrate { AccountAggregate(aggregateId, eventStore) }
         }
     }
 

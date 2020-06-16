@@ -32,11 +32,4 @@ interface Aggregate<A : Aggregate<A, E, C>, E : Event, C : Command> {
                     acc.flatMap { it.process(c) }
                 }
     }
-
-    fun rehydrate(): A {
-        return eventStore.retrieveEvents(aggregateType, aggregateId)
-                .foldLeft(this as A) { a, e ->
-                    a.apply(e as E)
-                }
-    }
 }
