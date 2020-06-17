@@ -18,7 +18,7 @@ data class AccountAggregate(override val aggregateId: UUID,
                 is MakeWithdraw -> withdrawMoney(command.amount) { listOf(WithdrawMade(command.accountId, command.amount, command.date)) }
                 is MakeTransferWithdraw -> withdrawMoney(command.amount) { listOf(TransferWithdrawMade(command.accountId, command.transferId, command.amount, command.date)) }
                 is MakeTransferDeposit -> Either.right(listOf(TransferDepositMade(command.accountId, command.transferId, command.amount, command.date)))
-                is CancelTransferWithdraw -> Either.right(listOf(TransferWithdrawCanceled(command.accountId, command.transferId, command.amount)))
+                is CancelTransferWithdraw -> Either.right(listOf(TransferWithdrawCanceled(command.accountId, command.transferId, command.amount, command.date)))
             }
 
     private fun withdrawMoney(money: Money, f: () -> List<AccountEvent>): Either<Exception, List<AccountEvent>> {

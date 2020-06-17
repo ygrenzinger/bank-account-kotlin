@@ -14,4 +14,4 @@ data class MakeDeposit(val accountId: UUID, val amount: Money, val date: LocalDa
 data class MakeWithdraw(val accountId: UUID, val amount: Money, val date: LocalDate) : AccountCommand(accountId)
 data class MakeTransferWithdraw(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountCommand(accountId)
 data class MakeTransferDeposit(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountCommand(accountId)
-data class CancelTransferWithdraw(val accountId: UUID, val transferId: UUID, val amount: Money) : AccountCommand(accountId)
+data class CancelTransferWithdraw(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountCommand(accountId)

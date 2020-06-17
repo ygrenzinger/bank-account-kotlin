@@ -18,4 +18,4 @@ data class DepositMade(val accountId: UUID, val amount: Money, val date: LocalDa
 data class WithdrawMade(val accountId: UUID, val amount: Money, val date: LocalDate) : AccountEvent(accountId)
 data class TransferWithdrawMade(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountEvent(accountId)
 data class TransferDepositMade(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountEvent(accountId)
-data class TransferWithdrawCanceled(val accountId: UUID, val transferId: UUID, val amount: Money) : AccountEvent(accountId)
+data class TransferWithdrawCanceled(val accountId: UUID, val transferId: UUID, val amount: Money, val date: LocalDate) : AccountEvent(accountId)
